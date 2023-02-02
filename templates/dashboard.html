@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+    <h3>Control Panel</h3>
+    <small>Welcome,{{session["username"]}}</small>
+    <hr>
+    <a class="btn btn-danger" href="/addarticle">Add article</a>
+
+{% endblock body %}

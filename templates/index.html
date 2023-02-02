@@ -1,0 +1,24 @@
+{%extends "layout.html"%}
+
+
+{% block body %}
+    {% if answer == "yes" %}
+        <h3>Answer is yes</h3>
+    {% else %}
+        <h3>Answer is not yes</h3>
+    {% endif %}
+
+
+
+    {% for numbers in numb  %}
+        <li>{{numbers}}</li>
+    
+    {% endfor %}
+
+    {% for article in articles %}
+        <li>Article ID:{{article.id}} -- Article Title:{{article.title}} -- Article Content:{{article.content}}</li>
+
+    
+    {% endfor %}
+
+{% endblock body %}
