@@ -78,16 +78,19 @@ mysql = MySQL(app)
 
 @app.route("/")
 def index():
+    cursor = mysql.connection.cursor()
+    checksql = "Select * from articles"
+    result = cursor.execute(checksql)
     
-    return render_template("index.html")
+    if result > 0:
+        articles = cursor.fetchall()
+        return render_template("index.html",articles = articles)
+    else:
+        return render_template("index.html")
 
 @app.route("/about")
 def about():
     return render_template("about.html")
-
-@app.route("/article/<string:id>")
-def detail(id):
-    return "Article Id:" + id
 
 # Register
 @app.route("/register", methods = ["GET","POST"])
@@ -151,7 +154,26 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
+# Search
+@app.route("/search", methods = ["GET","POST"])
+def search():
+    if request.method == "GET":
+        return redirect(url_for("index"))
+    else: 
+        keyword = request.form.get("keyword")
 
+        cursor = mysql.connection.cursor()
+        checksql = "Select * from articles where title like '%"+ keyword +"%'"
+        
+        result = cursor.execute(checksql)
+
+        if result == 0:
+            flash("There is not match","warning")
+            return redirect(url_for("index"))
+        else:
+            articles = cursor.fetchall()
+
+            return render_template("index.html",articles = articles)
 
 
 
@@ -159,7 +181,15 @@ def logout():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html")
+    cursor = mysql.connection.cursor()
+    checksql = "Select * From articles where author = %s"
+    result = cursor.execute(checksql,(session["username"],))
+
+    if result > 0:
+        articles = cursor.fetchall()
+        return render_template("dashboard.html",articles=articles)
+    else:
+        return render_template("dashboard.html")
 
 
 # Add Article
@@ -178,14 +208,97 @@ def addArticle():
         cursor.close()
         flash("Article posted successfully","success")
         return redirect(url_for("dashboard"))
-
-
-
-
-
-
-
     return render_template("addarticle.html",form = form)
+
+# Delete Article
+
+@app.route("/delete/<string:id>")
+@login_required
+def delete(id):
+    cursor = mysql.connection.cursor()
+    checksql = "Select * from articles where author = %s and id = %s"
+
+    result = cursor.execute(checksql,(session["username"],id))
+
+    if result > 0:
+        checksql2 = "Delete from articles where id = %s"
+        cursor.execute(checksql2,(id,))
+        mysql.connection.commit()
+        return redirect(url_for("dashboard"))
+    else:
+        flash("There is no article or you are authorized to delete.","danger")
+        return redirect(url_for("index"))
+
+# Update Article
+@app.route("/edit/<string:id>", methods = ["GET","POST"])
+@login_required
+def update(id):
+    if request.method == "GET":
+        cursor = mysql.connection.cursor()
+        checksql = "Select * from articles where id = %s and author = %s"
+        result = cursor.execute(checksql,(id,session["username"]))
+        if result == 0:
+            flash("Article does not exist")
+            return redirect(url_for("index"))
+        else:
+            article = cursor.fetchone()
+            form = ArticleForm()
+            form.title.data = article["title"]
+            form.content.data = article["content"]
+            return render_template("update.html",form = form)
+
+    else:
+        # POST REQUEST
+        form = ArticleForm(request.form)
+        newTitle = form.title.data
+        newContent = form.content.data
+
+        checksql2 = "Update articles Set title = %s, content = %s where id = %s"
+        cursor = mysql.connection.cursor()
+
+        cursor.execute(checksql2,(newTitle,newContent,id))
+        mysql.connection.commit()
+
+        flash("Article updated successfuly","success")
+
+        return redirect(url_for("dashboard"))
+
+
+
+
+
+# Articles
+@app.route("/articles")
+def articles():
+    cursor = mysql.connection.cursor()
+
+    checksql = "Select * From articles"
+
+    result = cursor.execute(checksql)
+
+    if result > 0:
+        articles = cursor.fetchall()
+        return render_template("articles.html",articles=articles)
+    else:
+        return render_template("articles.html")
+
+# Article Detail
+
+@app.route("/article/<string:id>")
+def articledetail(id):
+    cursor = mysql.connection.cursor()
+    checksql = "Select * from articles where id = %s"
+    result = cursor.execute(checksql,(id,))
+
+    if result > 0:
+        article = cursor.fetchone()
+        return render_template("article.html",article=article)
+    else:
+        return render_template("article.html")
+
+
+
+    
 
 
 if __name__ == "__main__":

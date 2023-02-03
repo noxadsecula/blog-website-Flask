@@ -2,21 +2,15 @@
 
 
 {% block body %}
-    {% if answer == "yes" %}
-        <h3>Answer is yes</h3>
-    {% else %}
-        <h3>Answer is not yes</h3>
-    {% endif %}
-
-
-
-    {% for numbers in numb  %}
-        <li>{{numbers}}</li>
-    
-    {% endfor %}
 
     {% for article in articles %}
-        <li>Article ID:{{article.id}} -- Article Title:{{article.title}} -- Article Content:{{article.content}}</li>
+        <h2>{{article.title}}</h2>
+        <hr>
+        <p>{{article.content}}</p>
+        <hr>
+        <p>Author:{{article.author}}, {{article.created_date}}</p>
+        <br><br><br>
+
 
     
     {% endfor %}
